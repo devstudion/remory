@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665388228211",
+    "project_id": "remory-31c3e",
+    "storage_bucket": "remory-31c3e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665388228211:android:403fbbd6bc9e98dd831406",
+        "android_client_info": {
+          "package_name": "com.example.remory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGXK0LYdEn44pncPArDI247ULEQaTzuJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
