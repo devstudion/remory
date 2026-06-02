@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import '../models/memory.dart';
+import '../services/theme_classifier.dart';
 import 'category_page.dart';
 import 'detail_page.dart';
+import 'slideshow_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final List<Memory> memories;
@@ -25,10 +26,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'REMORY',
-          style: TextStyle(
-            letterSpacing: 2.0,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(letterSpacing: 2.0, fontWeight: FontWeight.bold),
         ),
       ),
       body: RefreshIndicator(
@@ -44,7 +42,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              _buildCarousel(context),
+              _buildTripleThemePanel(context),
               const SizedBox(height: 28),
               _sectionTitle('アルバムで整理'),
               const SizedBox(height: 12),
@@ -62,117 +60,89 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _sectionTitle(String title) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF5D4037),
-          ),
-        ),
-      );
-
-  Widget _buildCarousel(BuildContext context) {
-    if (memories.isEmpty) {
-      return CarouselSlider(
-        options: CarouselOptions(
-          height: 190,
-          enableInfiniteScroll: false,
-          enlargeCenterPage: true,
-        ),
-        items: [
-          GestureDetector(
-            onTap: onNavigateToCapture,
-            child: Container(
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: const Color(0xFFEADDCF),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.brown.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_a_photo_outlined,
-                    size: 48,
-                    color: Color(0xFF8D6E63),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    '最初の思い出をのこしましょう',
-                    style: TextStyle(
-                      color: Color(0xFF5D4037),
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final carouselItems = memories.take(5).toList();
-
-    return CarouselSlider(
-      options: CarouselOptions(
-        height: 190,
-        autoPlay: carouselItems.length > 1,
-        autoPlayInterval: const Duration(seconds: 4),
-        enlargeCenterPage: true,
-        viewportFraction: 0.85,
+    padding: const EdgeInsets.symmetric(horizontal: 24),
+    child: Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF5D4037),
       ),
-      items: carouselItems.map((m) {
-        return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MemoryDetailPage(
-                memory: m,
-                onDelete: onDelete,
-                onUpdateCategory: onUpdateCategory,
-              ),
-            ),
-          ),
+    ),
+  );
+
+  // ──────────────────────────────────────────────
+  // 3分割テーマパネル
+  // ──────────────────────────────────────────────
+  Widget _buildTripleThemePanel(BuildContext context) {
+    if (memories.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: GestureDetector(
+          onTap: onNavigateToCapture,
           child: Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            height: 180,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               color: const Color(0xFFEADDCF),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.brown.withOpacity(0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+                  color: Colors.brown.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Hero(
-                tag: 'carousel-${m.id}',
-                child: Image.network(
-                  m.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 40),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_a_photo_outlined,
+                  size: 48,
+                  color: Color(0xFF8D6E63),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  '最初の思い出をのこしましょう',
+                  style: TextStyle(
+                    color: Color(0xFF5D4037),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final themes = ThemeClassifier.buildThemes(memories);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: themes.map((theme) {
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: _ThemePanelCard(
+                theme: theme,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SlideshowScreen(
+                      theme: theme,
+                      onDelete: onDelete,
+                      onUpdateCategory: onUpdateCategory,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -288,10 +258,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Text(
                   'のこした思い出がここに並びます',
-                  style: TextStyle(
-                    color: Color(0xFF8D6E63),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Color(0xFF8D6E63), fontSize: 12),
                 ),
               ],
             ),
@@ -303,12 +270,14 @@ class HomeScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: GridView.builder(
+        padding: EdgeInsets.zero,
+
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+          crossAxisCount: 4,
+          crossAxisSpacing: 4,
+          mainAxisSpacing: 4,
           childAspectRatio: 0.85,
         ),
         itemCount: memories.length,
@@ -351,6 +320,185 @@ class HomeScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// テーマパネルカードウィジェット
+// ─────────────────────────────────────────────────────────
+class _ThemePanelCard extends StatefulWidget {
+  final MemoryTheme theme;
+  final VoidCallback onTap;
+
+  const _ThemePanelCard({required this.theme, required this.onTap});
+
+  @override
+  State<_ThemePanelCard> createState() => _ThemePanelCardState();
+}
+
+class _ThemePanelCardState extends State<_ThemePanelCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      lowerBound: 0.93,
+      upperBound: 1.0,
+      value: 1.0,
+    );
+    _scaleAnimation = _scaleController;
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasThumbnail = widget.theme.thumbnail != null;
+
+    return GestureDetector(
+      onTapDown: (_) => _scaleController.reverse(),
+      onTapUp: (_) {
+        _scaleController.forward();
+        widget.onTap();
+      },
+      onTapCancel: () => _scaleController.forward(),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) =>
+            Transform.scale(scale: _scaleAnimation.value, child: child),
+        child: Container(
+          height: 180,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: const Color(0xFFEADDCF),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.brown.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ── サムネイル画像 ──
+                if (hasThumbnail)
+                  Image.network(
+                    widget.theme.thumbnail!.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => _placeholder(),
+                  )
+                else
+                  _placeholder(),
+
+                // ── 全体に薄いオーバーレイ ──
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0x88000000),
+                        Color(0x22000000),
+                        Color(0x66000000),
+                      ],
+                      stops: [0.0, 0.4, 1.0],
+                    ),
+                  ),
+                ),
+
+                // ── 左上：テーマアイコン（控えめ表示） ──
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      widget.theme.icon,
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                  ),
+                ),
+
+                // ── 下部：テーマ名 ──
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+                    child: Text(
+                      widget.theme.label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                        shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── 右下：枚数バッジ ──
+                if (widget.theme.memories.isNotEmpty)
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${widget.theme.memories.length}枚',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: const Color(0xFFEADDCF),
+      child: Center(
+        child: Text(widget.theme.icon, style: const TextStyle(fontSize: 36)),
       ),
     );
   }
