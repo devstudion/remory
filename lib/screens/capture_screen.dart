@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart'; // 🔥 Web判定に必須のインポート
 import '../services/supabase_service.dart';
 
 class CaptureScreen extends StatefulWidget {
@@ -46,7 +47,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('写真の読み込みに失敗しました: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('写真の読み込みに失敗しました: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -55,7 +59,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Future<void> _saveMemory() async {
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('写真を選んでください'), backgroundColor: Colors.amber),
+        const SnackBar(
+          content: Text('写真を選んでください'),
+          backgroundColor: Colors.amber,
+        ),
       );
       return;
     }
@@ -70,7 +77,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
       await service.addMemory(
         imageUrl: imageUrl,
         category: _selectedCategory,
-        memo: _memoController.text.trim().isEmpty ? null : _memoController.text.trim(),
+        memo: _memoController.text.trim().isEmpty
+            ? null
+            : _memoController.text.trim(),
       );
 
       if (mounted) {
@@ -93,7 +102,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存に失敗しました: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('保存に失敗しました: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -105,11 +117,19 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 【安全対策】Webかスマホかで画像の読み込み方を綺麗に分ける処理
+    ImageProvider? previewImage;
+    if (_selectedImage != null) {
+      if (kIsWeb) {
+        previewImage = NetworkImage(_selectedImage!.path);
+      } else {
+        previewImage = FileImage(File(_selectedImage!.path));
+      }
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
-      appBar: AppBar(
-        title: const Text('思い出をのこす'),
-      ),
+      appBar: AppBar(title: const Text('思い出をのこす')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Column(
@@ -127,11 +147,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFEADDCF),
                   borderRadius: BorderRadius.circular(20),
-                  image: _selectedImage != null
-                      ? DecorationImage(
-                          image: FileImage(File(_selectedImage!.path)),
-                          fit: BoxFit.cover,
-                        )
+                  // 🔥 エラーの原因だった三項演算子を排除し、上で作った previewImage を指定
+                  image: previewImage != null
+                      ? DecorationImage(image: previewImage, fit: BoxFit.cover)
                       : null,
                   boxShadow: [
                     BoxShadow(
@@ -193,11 +211,15 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF8D6E63) : Colors.white,
+                        color: isSelected
+                            ? const Color(0xFF8D6E63)
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.brown.withOpacity(isSelected ? 0.1 : 0.03),
+                            color: Colors.brown.withOpacity(
+                              isSelected ? 0.1 : 0.03,
+                            ),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           ),
@@ -207,7 +229,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
                         children: [
                           Icon(
                             c['icon'],
-                            color: isSelected ? Colors.white : const Color(0xFF8D6E63),
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF8D6E63),
                             size: 24,
                           ),
                           const SizedBox(height: 6),
@@ -216,7 +240,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : const Color(0xFF5D4037),
+                              color: isSelected
+                                  ? Colors.white
+                                  : const Color(0xFF5D4037),
                             ),
                           ),
                         ],
@@ -244,7 +270,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
               enabled: !_isUploading,
               decoration: InputDecoration(
                 hintText: '例: 2026年のお正月に貰った手紙。心温まるメッセージ。',
-                hintStyle: TextStyle(color: const Color(0xFF8D6E63).withOpacity(0.5), fontSize: 13),
+                hintStyle: TextStyle(
+                  color: const Color(0xFF8D6E63).withOpacity(0.5),
+                  fontSize: 13,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -280,7 +309,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       )
                     : const Text(
                         '思い出をのこす',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ),
             ),
