@@ -279,98 +279,122 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // --- 認証ダイアログ ---
 
+  // --- 認証ダイアログ ---
+
   void _showAuthDialog({required bool isSignUp}) {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    String? errorMessage; // 🔥 エラー文を保持する変数を追加
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isSignUp ? 'データの引き継ぎ' : 'ログイン'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'メールアドレス'),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            TextField(
-              controller: passwordController,
-              decoration: const InputDecoration(labelText: 'パスワード(6文字以上)'),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8D6E63),
-            ),
-            onPressed: () async {
-              final email = emailController.text.trim();
-              final password = passwordController.text.trim();
-
-              // バリデーション
-              if (!RegExp(
-                r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
-              ).hasMatch(email)) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('正しいメール形式で入力してください'),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-                return;
-              }
-              if (password.length < 6) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('パスワードは6文字以上必要です'),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-                return;
-              }
-
-              try {
-                if (isSignUp) {
-                  await Supabase.instance.client.auth.updateUser(
-                    UserAttributes(email: email, password: password),
-                  );
-                } else {
-                  await Supabase.instance.client.auth.signInWithPassword(
-                    email: email,
-                    password: password,
-                  );
-                }
-                if (mounted) {
-                  Navigator.pop(context);
-                  setState(() {});
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('成功しました！')));
-                }
-              } catch (e) {
-                if (mounted)
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('エラー: $e'),
-                      backgroundColor: Colors.redAccent,
+      builder: (context) => StatefulBuilder(
+        // 🔥 ダイアログの中だけを更新するために追加
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(isSignUp ? 'データの引き継ぎ' : 'ログイン'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 🔥 エラーがある場合のみ、入力欄の上に赤文字で表示
+                if (errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  );
-              }
-            },
-            child: Text(
-              isSignUp ? '登録' : 'ログイン',
-              style: const TextStyle(color: Colors.white),
+                    child: Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'メールアドレス'),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                TextField(
+                  controller: passwordController,
+                  decoration: const InputDecoration(labelText: 'パスワード(6文字以上)'),
+                  obscureText: true,
+                ),
+              ],
             ),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8D6E63),
+                ),
+                onPressed: () async {
+                  final email = emailController.text.trim();
+                  final password = passwordController.text.trim();
+
+                  // バリデーションエラーはダイアログ内に表示
+                  if (!RegExp(
+                    r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                  ).hasMatch(email)) {
+                    setDialogState(() => errorMessage = '正しいメール形式で入力してください');
+                    return;
+                  }
+                  if (password.length < 6) {
+                    setDialogState(() => errorMessage = 'パスワードは6文字以上必要です');
+                    return;
+                  }
+
+                  setDialogState(() => errorMessage = null); // 実行前にエラーを消す
+
+                  try {
+                    if (isSignUp) {
+                      await Supabase.instance.client.auth.updateUser(
+                        UserAttributes(email: email, password: password),
+                      );
+                    } else {
+                      await Supabase.instance.client.auth.signInWithPassword(
+                        email: email,
+                        password: password,
+                      );
+                    }
+                    if (mounted) {
+                      Navigator.pop(context);
+                      setState(() {}); // 親画面の更新
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('ログインに成功しました！')),
+                      );
+                    }
+                  } catch (e) {
+                    // 🔥 エラー内容を日本語に翻訳してダイアログ内に表示
+                    setDialogState(() {
+                      final errorStr = e.toString();
+                      if (errorStr.contains('Invalid login credentials')) {
+                        errorMessage = 'メールアドレスかパスワードが間違っています。';
+                      } else if (errorStr.contains('already registered')) {
+                        errorMessage = 'このメールアドレスは既に登録されています。';
+                      } else {
+                        errorMessage = '通信エラーが発生しました。もう一度お試しください。';
+                      }
+                    });
+                  }
+                },
+                child: Text(
+                  isSignUp ? '登録' : 'ログイン',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

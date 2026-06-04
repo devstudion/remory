@@ -1,6 +1,9 @@
+import 'dart:async'; // 🔥 ログイン状態の監視に必要
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 🔥 タブの記憶に必要
+
 import 'services/supabase_service.dart';
 import 'models/memory.dart';
 import 'screens/home_screen.dart';
@@ -10,7 +13,7 @@ import 'screens/profile_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔥 Supabase初期化 (anonKeyの先頭の不要な'Y'を削除して修復)
+  // Supabase初期化
   await Supabase.initialize(
     url: 'https://ksiedfezpasatplkuwws.supabase.co',
     anonKey:
@@ -59,7 +62,6 @@ class RemoryApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Color(0xFF5D4037)),
         ),
       ),
-      // ログイン機能なし：直接メイン画面を表示
       home: const MainScreen(),
     );
   }
@@ -74,6 +76,48 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  StreamSubscription<AuthState>? _authStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 🔥 アプリ起動時に最後に見ていたタブを復元する
+    _loadLastTab();
+
+    // 🔥 ログイン状態の変化を監視して画面を更新する
+    _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
+        .listen((data) {
+          if (mounted) {
+            setState(() {});
+          }
+        });
+  }
+
+  // タブの記憶を読み込む処理
+  Future<void> _loadLastTab() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _selectedIndex = prefs.getInt('last_tab_index') ?? 0;
+      });
+    }
+  }
+
+  // タブが切り替わったときに記憶する処理
+  Future<void> _onItemTapped(int index) async {
+    setState(() {
+      _selectedIndex = index;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('last_tab_index', index);
+  }
+
+  @override
+  void dispose() {
+    _authStateSubscription?.cancel();
+    super.dispose();
+  }
 
   // 各思い出操作メソッドの定義
   Future<void> _deleteMemory(Memory memory) async {
@@ -109,12 +153,12 @@ class _MainScreenState extends State<MainScreen> {
               onDelete: _deleteMemory,
               onUpdateCategory: _updateCategory,
               onNavigateToCapture: () {
-                setState(() => _selectedIndex = 1); // 撮影タブへナビゲート
+                _onItemTapped(1); // 撮影タブへ移動するときも記憶させる
               },
             ),
             CaptureScreen(
               onUploadSuccess: () {
-                setState(() => _selectedIndex = 0); // 成功したらホームに戻す
+                _onItemTapped(0); // 成功してホームに戻るときも記憶させる
               },
             ),
             ProfileScreen(memories: memories),
@@ -135,7 +179,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
+          onTap: _onItemTapped, // 🔥 タップしたときにタブの番号を記憶する関数を呼ぶ
           selectedItemColor: const Color(0xFF8D6E63),
           unselectedItemColor: const Color(0xFF8D6E63).withOpacity(0.5),
           backgroundColor: Colors.white,
