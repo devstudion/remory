@@ -9,6 +9,7 @@ import 'models/memory.dart';
 import 'screens/home_screen.dart';
 import 'screens/capture_screen.dart';
 import 'screens/profile_screen.dart';
+import 'package:flutter/foundation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,7 @@ void main() async {
 
   runApp(
     DevicePreview(
-      enabled: true,
+      enabled: kReleaseMode,
       defaultDevice: Devices.ios.iPhone16ProMax,
       isToolbarVisible: false,
       builder: (context) => const RemoryApp(),

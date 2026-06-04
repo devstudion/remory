@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ] # メインブランチにPushされたら動かす（masterの場合はmasterに変更）
+    branches: [ "main" ]
 
 jobs:
   build_and_deploy:
@@ -20,8 +20,7 @@ jobs:
       - name: パッケージをインストール
         run: flutter pub get
 
-      - name: Web用にビルド（※ここを修正！）
-        # 👇 YOUR_REPO_NAME の部分を、自分のGitHubのリポジトリ名に書き換えてください！
+      - name: Web用にビルド
         run: flutter build web --base-href "/remory/"
 
       - name: GitHub Pagesにデプロイ
