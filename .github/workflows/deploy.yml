@@ -22,7 +22,7 @@ jobs:
 
       - name: Web用にビルド（※ここを修正！）
         # 👇 YOUR_REPO_NAME の部分を、自分のGitHubのリポジトリ名に書き換えてください！
-        run: flutter build web --base-href "/YOUR_REPO_NAME/"
+        run: flutter build web --base-href "/remory/"
 
       - name: GitHub Pagesにデプロイ
         uses: peaceiris/actions-gh-pages@v3
