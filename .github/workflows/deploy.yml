@@ -1,0 +1,31 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ] # メインブランチにPushされたら動かす（masterの場合はmasterに変更）
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@v3
+
+      - name: Flutterをセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: パッケージをインストール
+        run: flutter pub get
+
+      - name: Web用にビルド（※ここを修正！）
+        # 👇 YOUR_REPO_NAME の部分を、自分のGitHubのリポジトリ名に書き換えてください！
+        run: flutter build web --base-href "/YOUR_REPO_NAME/"
+
+      - name: GitHub Pagesにデプロイ
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
