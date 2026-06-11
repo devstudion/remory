@@ -186,21 +186,15 @@ class _MainScreenState extends State<MainScreen> {
         },
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.brown.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
+        // 👇 影（BoxShadow）を消してスッキリさせました
+        decoration: const BoxDecoration(),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: _onItemTapped, // 🔥 タップしたときにタブの番号を記憶する関数を呼ぶ
+          onTap: _onItemTapped,
           selectedItemColor: const Color(0xFF8D6E63),
           unselectedItemColor: const Color(0xFF8D6E63).withOpacity(0.5),
-          backgroundColor: Colors.white,
+          // 👇 背景をアプリ全体の色に統一！
+          backgroundColor: const Color(0xFFFAF6F0),
           elevation: 0,
           type: BottomNavigationBarType.fixed,
           selectedLabelStyle: const TextStyle(
