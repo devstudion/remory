@@ -23,12 +23,29 @@ void main() async {
 
   runApp(
     DevicePreview(
-      enabled: kReleaseMode,
+      enabled: _shouldEnablePreview(),
       defaultDevice: Devices.ios.iPhone16ProMax,
       isToolbarVisible: false,
       builder: (context) => const RemoryApp(),
     ),
   );
+}
+
+bool _shouldEnablePreview() {
+  // ブラウザの画面（ウィンドウ）の横幅を取得します
+  final windowWidth =
+      WidgetsBinding
+          .instance
+          .platformDispatcher
+          .views
+          .first
+          .physicalSize
+          .width /
+      WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+
+  // 横幅が600ピクセルより大きければ「PC」と判断して枠をON（true）にする
+  // 600ピクセル以下なら「スマホ実機」と判断して枠をOFF（false）にする
+  return windowWidth > 600;
 }
 
 class RemoryApp extends StatelessWidget {
