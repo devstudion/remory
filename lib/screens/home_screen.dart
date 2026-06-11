@@ -23,12 +23,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
-      appBar: AppBar(
-        title: const Text(
-          'REMORY',
-          style: TextStyle(letterSpacing: 2.0, fontWeight: FontWeight.bold),
-        ),
-      ),
+      // 🔥 bodyは1つだけ！一番外側を RefreshIndicator で包む
       body: RefreshIndicator(
         onRefresh: () async {
           // リアルタイム購読しているためリフレッシュ自体は必須ではないですがUIに表示があるとプレミアム感が増します
@@ -36,24 +31,47 @@ class HomeScreen extends StatelessWidget {
         },
         color: const Color(0xFF8D6E63),
         backgroundColor: Colors.white,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              _buildTripleThemePanel(context),
-              const SizedBox(height: 28),
-              _sectionTitle('アルバムで整理'),
-              const SizedBox(height: 12),
-              _buildAlbumList(context),
-              const SizedBox(height: 28),
-              _sectionTitle('すべての思い出'),
-              const SizedBox(height: 12),
-              _buildGrid(context),
-              const SizedBox(height: 40),
-            ],
-          ),
+
+        // 🔥 全体のスクロールを CustomScrollView で管理する
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(), // 引っ張って更新するために必要
+          slivers: [
+            // ① スクロールに連動するヘッダー（REMORY）
+            const SliverAppBar(
+              title: Text(
+                'REMORY',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              floating: true, // 下スクロールで消え、上スクロールですぐ現れる！
+              snap: true, // シュッとスムーズに出る
+              backgroundColor: Color(0xFFFAF6F0), // 元のテーマ色に合わせました
+              foregroundColor: Color(0xFF5D4037), // 元の文字色に合わせました
+              elevation: 0, // スッキリ見せるために影は0にしています
+            ),
+
+            // ② 画面のメインコンテンツ（元の画面の中身をここに入れる）
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  _buildTripleThemePanel(context),
+                  const SizedBox(height: 28),
+                  _sectionTitle('アルバムで整理'),
+                  const SizedBox(height: 12),
+                  _buildAlbumList(context),
+                  const SizedBox(height: 28),
+                  _sectionTitle('すべての思い出'),
+                  const SizedBox(height: 12),
+                  _buildGrid(context),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
